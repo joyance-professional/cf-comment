@@ -1,0 +1,32 @@
+# wrangler.toml
+
+name = "comment-system-worker"
+main = "src/worker/index.js"
+compatibility_date = "2023-10-01"
+
+# 环境变量
+[vars]
+ADMIN_PASSWORD = "YOUR_ADMIN_PASSWORD"
+TURNSTILE_SECRET_KEY = "YOUR_TURNSTILE_SECRET_KEY"
+
+# KV 命名空间，用于存储会话令牌
+[[kv_namespaces]]
+binding = "SESSIONS"
+id = "YOUR_KV_NAMESPACE_ID"
+preview_id = "YOUR_KV_NAMESPACE_ID"
+
+# D1 数据库配置
+[[d1_databases]]
+binding = "DB"
+database_name = "YOUR_D1_DATABASE_NAME"
+database_id = "YOUR_D1_DATABASE_ID"
+preview_database_id = "YOUR_D1_DATABASE_ID"
+
+# 构建配置
+[build]
+command = "npm install && npm run build"
+
+# 部署环境（可选）
+[env.production]
+route = "your-domain.com/*"
+account_id = "YOUR_CLOUDFLARE_ACCOUNT_ID"

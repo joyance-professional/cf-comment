@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>评论系统管理面板</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- 通知栏 -->
+    <div id="notification" class="notification" style="display: none;">
+        <span id="notification-message"></span>
+        <span id="notification-close" class="close-btn">&times;</span>
+    </div>
+
+    <!-- 登录表单 -->
+    <div id="login-form">
+        <h1>登录</h1>
+        <input type="password" id="password" placeholder="请输入密码">
+        <button id="login-button">登录</button>
+    </div>
+
+    <!-- 管理面板 -->
+    <div id="admin-panel" style="display: none;">
+        <h1>管理面板</h1>
+
+        <!-- 创建新站点 -->
+        <div id="create-site">
+            <h2>创建新站点</h2>
+            <input type="text" id="site-code" placeholder="代号">
+            <input type="text" id="site-url" placeholder="URL">
+            <input type="text" id="turnstile-site-key" placeholder="Turnstile Site Key">
+            <button id="create-site-button">创建</button>
+        </div>
+
+        <!-- 站点列表 -->
+        <div id="site-list">
+            <h2>现有站点</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>代号</th>
+                        <th>URL</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody id="site-table-body">
+                    <!-- 动态生成站点列表 -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
