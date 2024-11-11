@@ -1,4 +1,4 @@
-# 评论系统 cf-comment
+# 评论系统 cf-comment (未完成
 
 一个基于 Cloudflare Workers 和 D1 数据库的简洁、美观的评论系统，适用于个人博客或静态网站。
 
