@@ -1,116 +1,120 @@
 /* 全局样式 */
 body {
-    margin: 0;
-    padding: 0;
-    font-family: Arial, sans-serif;
-    background-color: #FFFFFF; /* 白色背景 */
-    color: #000000; /* 黑色文字 */
+  margin: 0;
+  padding: 0;
+  font-family: Arial, sans-serif;
+  background-color: #FFFFFF;
+  color: #000000;
 }
 
 h1, h2 {
-    text-align: center;
+  text-align: center;
 }
 
 input, button {
-    display: block;
-    margin: 10px auto;
-    padding: 10px;
-    font-size: 16px;
+  display: block;
+  margin: 10px auto;
+  padding: 10px;
+  font-size: 16px;
+  width: 80%;
 }
 
 button {
-    background-color: #808080; /* 灰色 */
-    color: #FFFFFF;
-    border: none;
-    cursor: pointer;
-    transition: background-color 0.3s; /* 按钮悬停效果 */
+  background-color: #808080;
+  color: #FFFFFF;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.3s;
 }
 
 button:hover {
-    background-color: #FF0000; /* 红色 */
+  background-color: #FF0000;
 }
 
 table {
-    width: 80%;
-    margin: 20px auto;
-    border-collapse: collapse;
+  width: 80%;
+  margin: 20px auto;
+  border-collapse: collapse;
 }
 
 th, td {
-    padding: 10px;
-    border: 1px solid #000000;
-    text-align: center;
+  padding: 10px;
+  border: 1px solid #000000;
+  text-align: center;
 }
 
 .close-btn {
-    cursor: pointer;
+  cursor: pointer;
 }
 
 /* 通知栏样式 */
 .notification {
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    width: 100%;
-    background-color: #FF0000; /* 红色 */
-    color: #FFFFFF;
-    padding: 10px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    animation: slideIn 0.5s;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  background-color: #FF0000;
+  color: #FFFFFF;
+  padding: 10px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  animation: slideIn 0.5s;
 }
 
 .notification .close-btn {
-    position: absolute;
-    right: 20px;
+  position: absolute;
+  right: 20px;
 }
 
 /* 动画 */
 @keyframes slideIn {
-    from {
-        transform: translateY(100%);
-    }
-    to {
-        transform: translateY(0%);
-    }
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0%);
+  }
 }
 
 @keyframes slideOut {
-    from {
-        transform: translateY(0%);
-    }
-    to {
-        transform: translateY(100%);
-    }
+  from {
+    transform: translateY(0%);
+  }
+  to {
+    transform: translateY(100%);
+  }
 }
 
 /* 删除按钮确认状态 */
 .delete-btn.confirm {
-    background-color: #FF0000; /* 红色 */
+  background-color: #FF0000;
 }
 
 /* 响应式设计 */
 @media (max-width: 768px) {
-    table, thead, tbody, th, td, tr {
-        display: block;
-    }
+  input, button {
+    width: 90%;
+  }
+  table, thead, tbody, th, td, tr {
+    display: block;
+  }
 
-    th {
-        display: none;
-    }
+  th {
+    display: none;
+  }
 
-    td {
-        position: relative;
-        padding-left: 50%;
-    }
+  td {
+    position: relative;
+    padding-left: 50%;
+  }
 
-    td::before {
-        content: attr(data-label);
-        position: absolute;
-        left: 0;
-        width: 50%;
-        padding-left: 10px;
-        font-weight: bold;
-    }
+  td::before {
+    content: attr(data-label);
+    position: absolute;
+    left: 0;
+    width: 50%;
+    padding-left: 10px;
+    font-weight: bold;
+  }
 }
