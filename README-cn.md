@@ -43,7 +43,7 @@ cf-comment/
 ### 克隆项目
 
 ```bash
-git clone https://github.com/your_username/cf-comment.git
+git clone https://github.com/joyance-professional/cf-comment
 cd cf-comment
 ```
 
