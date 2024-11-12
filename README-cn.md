@@ -1,18 +1,19 @@
 # 评论系统 cf-comment (未完成
 
-一个基于 Cloudflare Workers 和 D1 数据库的简洁、美观的评论系统，适用于个人博客或静态网站。
+一个基于 Cloudflare Workers 和 D1 数据库的简洁、美观、高效的评论系统，适用于个人博客或静态网站。
 
 ## 功能特性
 
-- **简洁美观的 UI**：黑白灰红配色，响应式设计，带有动画效果。
-- **安全验证**：集成 Cloudflare Turnstile 验证，防止垃圾评论。
+- **简洁美观的 UI**：黑白灰红配色，响应式设计，带有动画效果，易于集成到任何网站。
+- **安全验证**：集成 Cloudflare Turnstile 验证，防止垃圾评论和机器人攻击。
 - **易于集成**：通过简单的嵌入代码，将评论功能添加到任何静态网页。
 - **管理面板**：通过管理员面板创建、管理站点和评论，无需修改后端代码。
+- **用户自主申请**：未登录的用户可通过 Turnstile 验证后申请代号，创建自己的评论区，单个代号最大支持 1MB 的评论内容。
 
 ## 文件结构
 
 ```
-comment-system/
+cf-comment/
 ├── src/
 │   ├── admin/             # 管理面板前端
 │   │   ├── index.html
@@ -42,8 +43,8 @@ comment-system/
 ### 克隆项目
 
 ```bash
-git clone https://github.com/your_username/comment-system.git
-cd comment-system
+git clone https://github.com/your_username/cf-comment.git
+cd cf-comment
 ```
 
 ### 安装依赖
@@ -59,21 +60,26 @@ npm install
    - 设置 `name` 为你的 Worker 名称。
    - 更新 `account_id` 为你的 Cloudflare 账号 ID。
    - 在 `vars` 中设置以下环境变量：
-     - `ADMIN_PASSWORD`：管理面板的登录密码。
      - `TURNSTILE_SECRET_KEY`：Cloudflare Turnstile 的 Secret Key。
+     - `DEFAULT_TURNSTILE_SITE_KEY`：未登录用户申请代号时使用的默认 Turnstile Site Key。
+     
 
    ```toml
-   name = "comment-system-worker"
+   name = "cf-comment-worker"
    main = "src/worker/index.js"
    compatibility_date = "2023-10-01"
 
    [vars]
-   ADMIN_PASSWORD = "你的管理密码"
    TURNSTILE_SECRET_KEY = "你的Turnstile Secret Key"
+   DEFAULT_TURNSTILE_SITE_KEY = "你的默认Turnstile Site Key"
 
    [[kv_namespaces]]
    binding = "SESSIONS"
    id = "你的KV命名空间ID"
+
+   [[kv_namespaces]]
+   binding = "ASSETS"
+   id = "你的ASSETS KV命名空间ID"
 
    [[d1_databases]]
    binding = "DB"
@@ -93,11 +99,18 @@ npm install
    wrangler d1 execute your-d1-database-name --file=src/worker/schema.sql --remote
    ```
 
+3. **上传静态资源：**
+
+   将 `comment.js`、`admin` 目录下的文件上传到 KV 命名空间 `ASSETS`。
+
+   ```bash
+   wrangler kv:key put --namespace-id your_assets_kv_namespace_id "comment.js" --path src/comment.js
+   wrangler kv:key put --namespace-id your_assets_kv_namespace_id "admin/index.html" --path src/admin/index.html
+   wrangler kv:key put --namespace-id your_assets_kv_namespace_id "admin/style.css" --path src/admin/style.css
+   wrangler kv:key put --namespace-id your_assets_kv_namespace_id "admin/script.js" --path src/admin/script.js
+   ```
+
 ### 构建与部署
-
-#### 构建项目
-
-由于我们的 Worker 使用纯 JavaScript，无需额外的构建步骤。如果你有自定义的构建需求，可以修改 `package.json` 中的 `build` 脚本。
 
 #### 本地开发
 
@@ -113,29 +126,51 @@ wrangler publish
 
 ## 使用方法
 
-### 1. 访问管理面板
+### 1. 嵌入评论组件
 
-在浏览器中打开你的 Worker URL，加上 `/src/admin/index.html`，例如：
+在你的网站 HTML 中，添加以下代码：
+
+```html
+<div id="comment-component" data-turnstile-sitekey="你的Turnstile Site Key"></div>
+<script src="https://your-worker.your-domain.workers.dev/comment.js" defer></script>
+```
+
+- **注意**：如果你已经在管理面板创建了站点，可以在 `div` 标签中添加 `data-site-id="你的站点代号"`。
+
+### 2. 申请代号（未登录用户）
+
+如果你没有在管理面板创建站点，评论组件会在页面加载时提示你申请代号：
+
+- 点击 **申请代号** 按钮。
+- 完成 Turnstile 验证后，系统会自动为你生成一个代号，并绑定当前页面的 URL。
+- 代号申请成功后，评论功能即可正常使用。
+
+### 3. 使用管理面板
+
+#### 访问管理面板
+
+在浏览器中打开你的 Worker URL，加上 `/admin/index.html`，例如：
 
 ```
-https://your-worker.your-domain.workers.dev/src/admin/index.html
+https://your-worker.your-domain.workers.dev/admin/index.html
 ```
 
-### 2. 登录管理面板
+#### 登录管理面板
 
-使用你在 `wrangler.toml` 中设置的 `ADMIN_PASSWORD` 登录。
+- **首次登录**：由于初始未设置管理员密码，需要在 `wrangler.toml` 中添加 `ADMIN_PASSWORD` 环境变量，或通过其他方式设置。
+- **后续登录**：输入管理员密码，点击 **登录**。
 
-### 3. 创建新站点
+#### 创建新站点
 
 在管理面板中：
 
-- 输入 **代号**（`Site ID`）：用于标识你的站点，例如 `my-blog`.
-- 输入 **URL**：你的站点的域名或 URL，例如 `https://myblog.com`.
+- 输入 **代号**（`Site ID`）：用于标识你的站点，例如 `my-blog`。
+- 输入 **URL**：你的站点的域名或 URL，例如 `https://myblog.com`。
 - 输入 **Turnstile Site Key**：从 Cloudflare Turnstile 获取，对应你站点的 Site Key。
 
 点击 **创建** 按钮。
 
-### 4. 获取嵌入代码
+#### 获取嵌入代码
 
 在现有站点列表中，点击 **获取嵌入代码** 按钮，会弹出包含嵌入代码的对话框。
 
@@ -146,11 +181,12 @@ https://your-worker.your-domain.workers.dev/src/admin/index.html
 <script src="https://your-worker.your-domain.workers.dev/comment.js" defer></script>
 ```
 
-### 5. 在你的站点中添加评论功能
+#### 删除站点
 
-将获取的嵌入代码复制到你的网站 HTML 中，放置在你希望显示评论的位置。
+- 点击 **删除** 按钮。
+- 按钮会变为 **确认删除** 状态，再次点击即可删除站点。
 
-### 6. 测试评论功能
+### 4. 测试评论功能
 
 打开你的网站，应该能够看到评论区，完成 Turnstile 验证后即可提交评论。
 
@@ -158,7 +194,7 @@ https://your-worker.your-domain.workers.dev/src/admin/index.html
 
 ### 修改样式
 
-评论组件的样式已经内嵌在 `comment.js` 中，如需修改，可在 `src/comment.js` 中的样式部分进行更改，然后重新部署。
+评论组件的样式已经内嵌在 `comment.js` 中，如需修改，可在 `src/comment.js` 中的样式部分进行更改，然后重新上传到 `ASSETS` KV 命名空间。
 
 ### 安全与限制
 
@@ -179,16 +215,10 @@ https://your-worker.your-domain.workers.dev/src/admin/index.html
 
 ### 3. 管理面板无法登录
 
-- 确保 `wrangler.toml` 中的 `ADMIN_PASSWORD` 与登录时输入的密码一致。
+- 确保已正确设置管理员密码。
 - 检查是否正确配置了 KV 命名空间 `SESSIONS`。
 
-## 贡献指南
-
-欢迎提出问题、建议或提交 Pull Request。
 
 ## 反馈
 
-如果您发现任何问题或有改进建议，请创建 [issue](https://github.com/joyance-professional/cf-files-sharing/issues)。
-希望这个 README 文件能够帮助你在 GitHub 上展示和分享你的项目。如有其他需求，请随时告知。
-
-```
+如果您发现任何问题或有改进建议，请创建 [issue](https://github.com/your_username/cf-comment/issues)。
