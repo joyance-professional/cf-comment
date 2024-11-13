@@ -21,9 +21,6 @@ binding = "DB"
 database_name = "YOUR_D1_DATABASE_NAME"
 database_id = "YOUR_D1_DATABASE_ID"
 
-[build]
-command = "npm install && npm run build"
-
 [env.production]
 route = "your-domain.com/*"
 account_id = "YOUR_CLOUDFLARE_ACCOUNT_ID"
