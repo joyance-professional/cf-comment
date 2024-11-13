@@ -58,34 +58,30 @@ npm install
 
 我们已经预设了 D1 数据库和 KV 命名空间的名称，您只需在 `wrangler.toml` 中填写您的 Cloudflare 账户 ID 和其他必要的密钥。
 
-```toml
-name = "comment-system-worker"
+```name = "comment-system-worker"
 main = "src/worker/index.js"
-compatibility_date = "2023-10-01"
+compatibility_date = "2024-10-01"
 
 [vars]
 TURNSTILE_SECRET_KEY = "你的Turnstile Secret Key"
 DEFAULT_TURNSTILE_SITE_KEY = "你的默认Turnstile Site Key"
+ADMIN_PASSWORD = "你的管理员密码"
+
+[site]
+bucket = "./src/admin"
 
 [[kv_namespaces]]
 binding = "SESSIONS"
 id = "sessions_kv_namespace_id"
-
-[[kv_namespaces]]
-binding = "ASSETS"
-id = "assets_kv_namespace_id"
 
 [[d1_databases]]
 binding = "DB"
 database_name = "comment_system_db"
 database_id = "d1_database_id"
 
-[build]
-command = "npm install && npm run build"
-
 [env.production]
-route = "your-domain.com/*"
 account_id = "你的Cloudflare账号ID"
+
 ```
 
 **注意：** 请将上述 `wrangler.toml` 文件中的 `你的Turnstile Secret Key`、`你的默认Turnstile Site Key` 和 `你的Cloudflare账号ID` 替换为您自己的信息。
