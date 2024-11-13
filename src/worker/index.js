@@ -608,3 +608,44 @@ async function handleStaticAsset(env, pathname) {
     return new Response('Not found', { status: 404 });
   }
 }
+
+// new
+
+import { getAssetFromKV } from '@cloudflare/kv-asset-handler';
+
+export default {
+  async fetch(request, env, ctx) {
+    return handleRequest(request, env);
+  },
+};
+
+async function handleRequest(request, env) {
+  if (request.method === 'OPTIONS') {
+    return new Response(null, {
+      headers: getCorsHeaders(),
+    });
+  }
+
+  const url = new URL(request.url);
+
+  if (url.pathname.startsWith('/api/')) {
+    return handleApiRequest(request, env);
+  } else {
+    try {
+      const response = await getAssetFromKV({ request });
+      return response;
+    } catch (e) {
+      return new Response('Not found', { status: 404 });
+    }
+  }
+}
+
+function getCorsHeaders() {
+  return {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Methods':
+      'GET,HEAD,POST,OPTIONS,PUT,PATCH,DELETE',
+    'Access-Control-Allow-Headers':
+      'Content-Type, Authorization',
+  };
+}
