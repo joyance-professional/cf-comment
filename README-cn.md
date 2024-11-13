@@ -57,7 +57,6 @@ npm install
 
 1. **修改 `wrangler.toml` 文件：**
 
-   - 设置 `name` 为你的 Worker 名称。
    - 更新 `account_id` 为你的 Cloudflare 账号 ID。
    - 在 `vars` 中设置以下环境变量：
      - `TURNSTILE_SECRET_KEY`：Cloudflare Turnstile 的 Secret Key。
