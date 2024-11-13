@@ -1,26 +1,23 @@
-# wrangler.toml
-
 name = "comment-system-worker"
 main = "src/worker/index.js"
-compatibility_date = "2023-10-01"
+compatibility_date = "2024-10-01"
 
 [vars]
-TURNSTILE_SECRET_KEY = "YOUR_TURNSTILE_SECRET_KEY"
-DEFAULT_TURNSTILE_SITE_KEY = "YOUR_DEFAULT_TURNSTILE_SITE_KEY"
+TURNSTILE_SECRET_KEY = "你的Turnstile Secret Key"
+DEFAULT_TURNSTILE_SITE_KEY = "你的默认Turnstile Site Key"
+ADMIN_PASSWORD = "你的管理员密码"
+
+[site]
+bucket = "./src/admin"
 
 [[kv_namespaces]]
 binding = "SESSIONS"
-id = "YOUR_KV_NAMESPACE_ID"
-
-[[kv_namespaces]]
-binding = "ASSETS"
-id = "YOUR_ASSETS_KV_NAMESPACE_ID"
+id = "sessions_kv_namespace_id"
 
 [[d1_databases]]
 binding = "DB"
-database_name = "YOUR_D1_DATABASE_NAME"
-database_id = "YOUR_D1_DATABASE_ID"
+database_name = "comment_system_db"
+database_id = "d1_database_id"
 
 [env.production]
-route = "your-domain.com/*"
-account_id = "YOUR_CLOUDFLARE_ACCOUNT_ID"
+account_id = "你的Cloudflare账号ID"
