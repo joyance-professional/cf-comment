@@ -1,11 +1,5 @@
 // index.js
 
-export default {
-  async fetch(request, env, ctx) {
-    return handleRequest(request, env);
-  },
-};
-
 async function handleRequest(request, env) {
   if (request.method === 'OPTIONS') {
     return new Response(null, {
