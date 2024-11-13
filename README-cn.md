@@ -118,21 +118,6 @@ wrangler kv:namespace create "ASSETS"
 
 将生成的 `id` 分别填入 `wrangler.toml` 中 `SESSIONS` 和 `ASSETS` 的 `id` 字段，替换 `sessions_kv_namespace_id` 和 `assets_kv_namespace_id`。
 
-#### 5. 设置环境变量
-
-设置您的 Cloudflare Turnstile Secret Key 和默认的 Turnstile Site Key。
-
-```bash
-wrangler secret put TURNSTILE_SECRET_KEY
-```
-
-按照提示输入您的 Turnstile Secret Key。
-
-```bash
-wrangler secret put DEFAULT_TURNSTILE_SITE_KEY
-```
-
-按照提示输入您的默认 Turnstile Site Key。
 
 ### 第四步：初始化 D1 数据库
 
