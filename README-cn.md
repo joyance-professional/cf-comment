@@ -295,7 +295,4 @@ comment-system/
 
 ## 反馈
 
-如果您发现任何问题或有改进建议，请创建 [issue](https://github.com/joyance-professional/cf-comment/issues)。
-
-
-这样，您可以直接按照上述步骤运行命令，快速部署评论系统。
+如果您发现任何问题或有改进建议，请创建 [issue](https://github.com/joyance-professional/cf-comment/issues)
