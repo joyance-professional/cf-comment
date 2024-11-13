@@ -129,18 +129,9 @@ wrangler d1 execute comment_system_db --file=src/worker/schema.sql --local
 
 ### 第五步：部署到 Cloudflare
 
-#### 1. 构建项目
-
 ```bash
-npm run build
+wrangler deploy
 ```
-
-#### 2. 部署
-
-```bash
-wrangler publish
-```
-
 ## 使用指南
 
 ### 管理员访问
