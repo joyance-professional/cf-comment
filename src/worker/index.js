@@ -1,4 +1,10 @@
-// index.js
+// src/worker/index.js
+
+export default {
+  async fetch(request, env) {
+    return handleRequest(request, env);
+  },
+};
 
 async function handleRequest(request, env) {
   if (request.method === 'OPTIONS') {
@@ -14,10 +20,8 @@ async function handleRequest(request, env) {
     return handleApiRequest(request, env);
   } else if (pathname === '/comment.js') {
     return handleCommentJs(env);
-  } else if (pathname.startsWith('/admin/')) {
-    return handleStaticAsset(env, pathname);
   } else {
-    return new Response('Not found', { status: 404 });
+    return handleStaticAsset(env, pathname);
   }
 }
 
@@ -30,6 +34,48 @@ function getCorsHeaders() {
       'Content-Type, Authorization',
   };
 }
+
+async function handleStaticAsset(env, pathname) {
+  const assetKey = pathname === '/' ? '/index.html' : pathname;
+  const asset = await env.__STATIC_CONTENT.get(assetKey.slice(1));
+
+  if (asset) {
+    let contentType = 'text/plain';
+    if (assetKey.endsWith('.html')) {
+      contentType = 'text/html';
+    } else if (assetKey.endsWith('.css')) {
+      contentType = 'text/css';
+    } else if (assetKey.endsWith('.js')) {
+      contentType = 'application/javascript';
+    }
+
+    return new Response(asset, {
+      status: 200,
+      headers: {
+        'Content-Type': contentType,
+      },
+    });
+  } else {
+    return new Response('Not found', { status: 404 });
+  }
+}
+
+async function handleCommentJs(env) {
+  const asset = await env.__STATIC_CONTENT.get('comment.js');
+
+  if (asset) {
+    return new Response(asset, {
+      status: 200,
+      headers: {
+        'Content-Type': 'application/javascript',
+      },
+    });
+  } else {
+    return new Response('Not found', { status: 404 });
+  }
+}
+
+// 以下是 API 处理函数
 
 async function handleApiRequest(request, env) {
   const url = new URL(request.url);
@@ -565,81 +611,4 @@ async function handleApplyCode(request, env) {
       },
     );
   }
-}
-
-async function handleCommentJs(env) {
-  const jsContent = await env.ASSETS.get('comment.js');
-
-  return new Response(jsContent, {
-    status: 200,
-    headers: {
-      'Content-Type': 'application/javascript',
-    },
-  });
-}
-
-async function handleStaticAsset(env, pathname) {
-  const assetPath = pathname.slice(1);
-  const assetContent = await env.ASSETS.get(assetPath);
-
-  if (assetContent) {
-    let contentType = 'text/plain';
-    if (assetPath.endsWith('.html')) {
-      contentType = 'text/html';
-    } else if (assetPath.endsWith('.css')) {
-      contentType = 'text/css';
-    } else if (assetPath.endsWith('.js')) {
-      contentType = 'application/javascript';
-    }
-
-    return new Response(assetContent, {
-      status: 200,
-      headers: {
-        'Content-Type': contentType,
-      },
-    });
-  } else {
-    return new Response('Not found', { status: 404 });
-  }
-}
-
-// new
-
-import { getAssetFromKV } from '@cloudflare/kv-asset-handler';
-
-export default {
-  async fetch(request, env, ctx) {
-    return handleRequest(request, env);
-  },
-};
-
-async function handleRequest(request, env) {
-  if (request.method === 'OPTIONS') {
-    return new Response(null, {
-      headers: getCorsHeaders(),
-    });
-  }
-
-  const url = new URL(request.url);
-
-  if (url.pathname.startsWith('/api/')) {
-    return handleApiRequest(request, env);
-  } else {
-    try {
-      const response = await getAssetFromKV({ request });
-      return response;
-    } catch (e) {
-      return new Response('Not found', { status: 404 });
-    }
-  }
-}
-
-function getCorsHeaders() {
-  return {
-    'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Methods':
-      'GET,HEAD,POST,OPTIONS,PUT,PATCH,DELETE',
-    'Access-Control-Allow-Headers':
-      'Content-Type, Authorization',
-  };
 }
