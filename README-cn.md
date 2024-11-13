@@ -112,11 +112,7 @@ wrangler d1 create comment_system_db
 wrangler kv:namespace create "SESSIONS"
 ```
 
-```bash
-wrangler kv:namespace create "ASSETS"
-```
-
-将生成的 `id` 分别填入 `wrangler.toml` 中 `SESSIONS` 和 `ASSETS` 的 `id` 字段，替换 `sessions_kv_namespace_id` 和 `assets_kv_namespace_id`。
+将生成的 `id` 填入 `wrangler.toml` 中 `SESSIONS` 的 `id` 字段，替换 `sessions_kv_namespace_id` 
 
 
 ### 第四步：初始化 D1 数据库
