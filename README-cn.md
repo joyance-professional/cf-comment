@@ -124,7 +124,7 @@ wrangler kv:namespace create "ASSETS"
 使用 `schema.sql` 文件初始化数据库结构。
 
 ```bash
-wrangler d1 execute comment_system_db --file=src/worker/schema.sql --local
+wrangler d1 execute comment_system_db --file=src/worker/schema.sql --remote
 ```
 
 ### 第五步：部署到 Cloudflare
