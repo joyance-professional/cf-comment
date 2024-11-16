@@ -43,7 +43,6 @@
 
 ```bash
 git clone https://github.com/joyance-professional/cf-comment
-cd comment-system
 ```
 
 ### 第二步：安装依赖
