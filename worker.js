@@ -1,5 +1,3 @@
---- START OF FILE Paste March 08, 2026 - 1:20PM ---
-
 const i18n = {
     'zh-CN': {
         'home_title': '评论系统 - 首页',
