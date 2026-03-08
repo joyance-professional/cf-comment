@@ -1,446 +1,312 @@
-# Cloudflare Worker Comment System (Mixing Version)
+Cloudflare Worker Comment System (PoW Enhanced Version)
 
-一个基于 [Cloudflare Workers](https://workers.cloudflare.com/) 运行的简单评论系统，支持回复、点赞、举报以及管理员后台管理功能；同时提供中英双语切换，方便更广泛地使用。  
-A simple comment system running on [Cloudflare Workers](https://workers.cloudflare.com/), supporting replies, likes, reports, and an admin management interface. It also provides bilingual (Chinese and English) support for broader usage.
+一个基于 Cloudflare Workers 运行的强大评论系统。
+本次更新彻底移除了 Turnstile，引入了 无感 PoW (工作量验证) 机制，完美解决了 iOS/微信/WebView 中 iframe 跨域 Cookie 被拦截的问题，并接入 DOMPurify 修复 XSS 漏洞，同时进行了移动端 UI 重构与功能增强。
 
+A robust comment system running on Cloudflare Workers.
+This update removes Turnstile in favor of Invisible PoW (Proof of Work), solving cross-domain iframe cookie issues on iOS/WeChat/WebViews. It integrates DOMPurify to fix XSS vulnerabilities and features a completely redesigned Mobile UI.
 
 ![alt text](./img/1-en.png)
+
+
 ![alt text](./img/2-cn.png)
 
----
+目录 (Table of Contents)
 
-## 目录 (Table of Contents)
+特性 | Features
 
-1. [特性 | Features](#特性--features)  
-2. [逻辑 | Workflow](#逻辑--workflow)  
-3. [部署指南 | Deployment Guide](#部署指南--deployment-guide)  
-    - [前提条件 | Prerequisites](#前提条件--prerequisites)  
-    - [程序步骤 | Program Steps](#程序步骤--program-steps)  
-    - [配套步骤 | Supporting Steps](#配套步骤--supporting-steps)  
-    - [TURNSTILE 配置 | TURNSTILE Configuration](#turnstile-配置--turnstile-configuration)  
-    - [环境变量 | Environment Variables](#环境变量--environment-variables)  
-    - [D1 配置 | D1 Setup](#d1-配置--d1-setup)  
-4. [使用指南 | Usage Guide](#使用指南--usage-guide)  
-    - [管理员访问 | Admin Access](#管理员访问--admin-access)  
-    - [创建讨论区 | Creating a Discussion Area](#创建讨论区--creating-a-discussion-area)  
-    - [嵌入式使用 | Embedding the Comment System](#嵌入式使用--embedding-the-comment-system)  
-    - [评论 | Commenting](#评论--commenting)  
-    - [回复 | Replying](#回复--replying)  
-    - [点赞 | Liking](#点赞--liking)  
-    - [举报 | Reporting](#举报--reporting)  
-    - [管理 | Management](#管理--management)  
-5. [技术细节 | Technical Details](#技术细节--technical-details)  
-6. [贡献指南 | Contributing](#贡献指南--contributing)  
-7. [致谢 | Acknowledgments](#致谢--acknowledgments)  
-8. [反馈 | Feedback](#反馈--feedback)  
+部署指南 | Deployment Guide
 
----
+前提条件 | Prerequisites
 
-## 特性 | Features
+程序步骤 | Program Steps
 
-- **💬 回复功能 / Reply Functionality**  
-  支持对评论进行回复，形成有层次的讨论串。  
-  Supports replying to comments, forming discussion threads.
+环境变量 | Environment Variables
 
-- **👍 点赞功能 / Like Functionality**  
-  用户可以给喜欢的评论点赞。  
-  Users can like comments they enjoy.
+D1 配置 | D1 Setup
 
-- **🚩 举报功能 / Report Functionality**  
-  用户可以举报不当或违规评论。  
-  Users can report inappropriate comments.
+使用指南 | Usage Guide
 
-- **🔒 管理后台 / Admin Panel**  
-  管理员可通过密码登录后台，管理评论、处理举报、隐藏/删除评论或讨论区。  
-  Admins can log in with a password to manage comments, handle reports, hide/delete comments or discussion areas.
+管理员访问 | Admin Access
 
-- **⚙️ 主题切换 / Theme Switching**  
-  支持浅色和深色主题切换。  
-  Supports switching between light and dark themes.
+创建讨论区 | Creating a Discussion Area
 
-- **🌐 多语言支持 / Multilingual Support**  
-  支持中英文双语切换。  
-  Supports both Chinese and English languages.
+嵌入式使用 | Embedding the Comment System
 
-- **🚀 Cloudflare Workers 驱动 / Powered by Cloudflare Workers**  
-  依托 Cloudflare 全球网络提供快速访问。  
-  Fast global access via Cloudflare’s worldwide network.
+高级嵌入 (Raw 模式) | Advanced Embed (Raw Mode)
 
-- **📱 嵌入式使用 / Embeddable**  
-  可以轻松嵌入到任何网页或应用当中。  
-  Easily embeddable into any webpage or app.
+评论与互动 | Commenting & Interaction
 
-- **✅ Turnstile 验证 / Turnstile Verification**  
-  使用 Cloudflare Turnstile 校验用户提交信息，防范垃圾评论。  
-  Uses Cloudflare Turnstile to validate user submissions and combat spam.
+管理 | Management
 
+技术细节 | Technical Details
 
----
+贡献指南 | Contributing
 
+致谢 | Acknowledgments
 
-## 部署指南 | Deployment Guide
+特性 | Features
+🛡️ 核心安全与架构 / Core Security & Architecture
 
-以下步骤将指导你如何在 Cloudflare Workers 上快速部署本评论系统。  
-The following steps will guide you through deploying this comment system on Cloudflare Workers.
+🔄 无感 PoW 验证 / Invisible PoW Verification
+NEW! 废弃 Turnstile。发布评论时，浏览器在后台计算 SHA-256 数学题（约 0.5-1.5秒）。
+优势：彻底解决 iOS Safari / 微信 / App WebView 中 iframe 跨域 Cookie 被拦截导致的“按钮永远灰色”问题。用户零感知，且有效防御机器人。
+NEW! Replaces Turnstile. The browser calculates a SHA-256 problem in the background (0.5-1.5s) when posting. Solves cross-domain cookie issues on iOS/WeChat and prevents bot spam without user interaction.
 
-### 前提条件 | Prerequisites
+⚔️ DOMPurify 防御 XSS / DOMPurify XSS Protection
+NEW! 前端渲染全面接入 DOMPurify，强制清洗所有恶意脚本与危险标签。
+优势：彻底封堵 <script> 等注入攻击，达到最高安全级别。
+NEW! Fully integrated DOMPurify cleanses all malicious scripts and tags, effectively blocking XSS attacks.
 
-- 拥有 [Cloudflare 账号](https://dash.cloudflare.com/)  
-  Have a [Cloudflare account](https://dash.cloudflare.com/)
+📱 界面与体验 / UI & UX
 
-### 程序步骤 | Program Steps
+📱 行动端极致优化 / Mobile UX Optimization
+NEW! 针对手机屏幕重构布局：输入框增高、字体固定 16px (防止 iOS 自动放大)、100% 宽度大按钮、图片自适应。
+NEW! Re-layout for mobile: larger inputs, fixed 16px font (prevents iOS zoom), full-width buttons, and responsive images.
 
-1. **登录 Cloudflare**: 访问 [Cloudflare 官方网站](https://dash.cloudflare.com/)，使用你的账号登录。  
-   **Log in to Cloudflare**: Go to the [Cloudflare Dashboard](https://dash.cloudflare.com/) and log in.
+🔌 Raw 纯净模式 / Raw Mode
+NEW! 支持 ?raw=1 参数。仅输出语义化 HTML 和 JS 功能，不加载任何自带 CSS。方便宿主网站高度客制化样式。
+NEW! Support ?raw=1. Outputs only semantic HTML and JS without default CSS, allowing full style customization by the host site.
 
-2. **创建 Worker**: 在侧边栏找到 “Workers and Pages”，点击进入。  
-   **Create a Worker**: In the sidebar, find **Workers and Pages** and click.
+💬 基础功能 / Basic Functions
 
-3. **新建 Worker**: 点击“创建”，选择“新建 Worker”，并随意命名。  
-   **Set up Worker**: Click **Create**, select **Create Worker**, and name it as you like.
+💬 回复与讨论 / Reply & Discussion
+支持嵌套回复，形成有层次的讨论串。
+Supports nested replies creating discussion threads.
 
-4. **编辑代码**: 在 Worker 详情页面的右上角点击 “编辑代码”，将此页面暂时放在一边。  
-   **Edit Code**: Click **Edit Code** at the top right corner of the Worker details page.
+👍 智能防刷点赞 / Anti-Spam Likes
+UPDATE! 基于 Cookie 的点赞记录，防止同一设备无限次刷赞。
+UPDATE! Cookie-based tracking prevents infinite like spamming from the same device.
 
-5. **拷贝代码**: 从本项目中复制 [worker.js](/worker.js) 文件的全部内容。  
-   **Copy Code**: Copy all contents of [worker.js](/worker.js) from this repository.
+🚩 举报功能 / Report Functionality
+用户可以举报不当内容，管理员后台可处理。
+Users can report inappropriate comments for admin review.
 
-6. **覆盖 Worker 代码**: 删除默认的 Worker 代码后，将上述内容粘贴进去。  
-   **Replace Worker Code**: Delete the default Worker code and paste the copied code.
+🔒 管理后台 / Admin Panel
+密码保护的后台，可删除/隐藏评论、管理讨论区。
+Password-protected panel to delete/hide comments and manage areas.
 
-7. **部署**: 点击右上角 “Deploy” 完成初步部署。  
-   **Deploy**: Click **Deploy** on the top right to perform an initial deployment.
+🌐 双语与主题 / Bilingual & Themes
+支持中/英切换，支持深色/浅色模式。
+Supports Chinese/English switching and Dark/Light modes.
 
----
+部署指南 | Deployment Guide
 
-### 配套步骤 | Supporting Steps
+由于移除了 Turnstile，部署变得更加简单。
+Since Turnstile has been removed, deployment is now much simpler.
 
-由于还未配置必需的环境，默认状态下 Worker 无法正常工作，需要进一步配置。  
-Your Worker will not function correctly yet without additional configurations.
+前提条件 | Prerequisites
 
-1. **返回 Worker 列表**: 回到 “Workers and Pages” 页面，点击你刚才创建的程序。  
-   **Back to Worker List**: Return to the “Workers and Pages” page and click on the newly created Worker.
+拥有 Cloudflare 账号
+Have a Cloudflare account
 
-2. **域和路由**: 在顶部选项中点击 “Settings”，找到 “Domains and Routes” 并复制 “.workers.dev” 的地址。  
-   **Domains and Routes**: In the top options, click **Settings**, then find **Domains and Routes** and copy the “.workers.dev” domain for later use.
+程序步骤 | Program Steps
 
----
+登录 Cloudflare: 访问 Cloudflare 官方网站。
+Log in to Cloudflare: Go to the Cloudflare Dashboard.
 
-### TURNSTILE 配置 | TURNSTILE Configuration
+创建 Worker: 在侧边栏找到 “Workers and Pages” -> “Create Worker”。
+Create a Worker: Go to Workers and Pages -> Create Worker.
 
-1. **进入 Turnstile**: 在侧边栏中找到 **Turnstile**。  
-   **Access Turnstile**: In the sidebar, locate **Turnstile**.
+命名: 随意命名，点击部署。
+Name: Name it as you like and deploy.
 
-2. **添加小组件**: 点击 **Add Widget**（或“添加小组件”），名称随意。  
-   **Add Widget**: Click **Add Widget**, and give it a name of your choice.
+编辑代码: 点击 “Edit Code” (编辑代码)。
+Edit Code: Click Edit Code.
 
-3. **绑定域名**: 点击 “+ Add Hostname”，将之前复制的域名（形如 xxx.workers.dev）粘贴进去，然后点击 “Add”。  
-   **Add Hostname**: Click **+ Add Hostname**, paste the domain you copied earlier (like xxx.workers.dev), then click **Add**.
+拷贝代码: 从本项目中复制 worker.js 的全部内容，覆盖默认代码。
+Copy Code: Copy all contents of worker.js and replace the default code.
 
-4. **选中并创建**: 在下方列表中勾选刚添加的域名，点击 **Add**，再点击 **Create**。  
-   **Select and Create**: Check the newly added domain in the list, click **Add**, then **Create**.
+初步部署: 点击右上角 “Deploy”。
+Deploy: Click Deploy.
 
-5. **复制站点密钥**: 将生成的 **Site Key** (站点密钥) 复制下来。  
-   **Copy Site Key**: Copy the generated **Site Key**.
+环境变量 | Environment Variables
 
-> 若需要 Turnstile 的 **Secret Key**，也可在此页面中获取。  
-> If you need Turnstile **Secret Key**, you can also obtain it here.
+打开 Worker 设置: 回到 Cloudflare 控制台，进入你的 Worker 页面。
+Open Worker Settings: Go back to your Worker's dashboard page.
 
----
+设置变量: 点击 “Settings” -> “Variables and Secrets”。
+Set Variables: Click Settings -> Variables and Secrets.
 
-### 环境变量 | Environment Variables
+添加管理员密码 (必需):
+Add Admin Password (Required):
+点击 Add：
 
-1. **打开 Worker 设置**: 再次回到 “Workers and Pages” 页面，点击你创建的程序。  
-   **Open Worker Settings**: Return to the “Workers and Pages” page, click the program you created.
+Name: ADMIN_PASS
 
-2. **设置变量和机密**: 在顶部点击 “Settings”，下滑到 “Variables and Secrets”。  
-   **Set Variables and Secrets**: At the top, click **Settings**, then scroll down to **Variables and Secrets**.
+Value: 你想要的管理员密码 (用于登录后台)
+(Your desired admin password)
 
-3. **添加 TURNSTILE_SITEKEY**:  
-   **Add `TURNSTILE_SITEKEY`**:  
-   - **Name**: `TURNSTILE_SITEKEY`  
-   - **Value**: 复制粘贴上一步获取的站点密钥  
-     (Paste the site key from the previous step)  
+部署: 点击 Deploy 使配置生效。
+Deploy: Click Deploy to apply changes.
 
-4. **部署**: 点击 **Deploy**。  
-   **Deploy**: Click **Deploy**.
+(注意：不再需要配置 TURNSTILE_SITEKEY)
+(Note: TURNSTILE_SITEKEY is no longer required)
 
-5. **添加管理员密码**: 再次点击 **Add**，  
-   **Add Admin Password**: Click **Add** again,  
-   - **Name**: `ADMIN_PASS`  
-   - **Value**: 你想要的管理员密码 (此后可更改)  
-     (Your desired admin password, can be changed later)  
+D1 配置 | D1 Setup
 
-6. **再次部署**: 点击 **Deploy**。  
-   **Deploy**: Click **Deploy** again.
+创建数据库: 在侧边栏 “Storage and Databases” -> “D1 SQL 数据库” -> Create。
+Create Database: Sidebar Storage and Databases -> D1 SQL Databases -> Create.
 
-> 若需要 Turnstile Secret Key 或其他密钥，可同样在此处添加对应变量，例如 `TURNSTILE_SECRET_KEY`。  
-> If you also need the Turnstile Secret Key or other keys, add them here, e.g., `TURNSTILE_SECRET_KEY`.
+执行 SQL: 进入数据库详情，点击 Console，粘贴并执行以下语句：
+Run SQL: In database details, click Console, paste and run:
 
----
+code
+SQL
+download
+content_copy
+expand_less
+CREATE TABLE comment_areas (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  name TEXT NOT NULL,
+  area_key TEXT NOT NULL UNIQUE,
+  intro TEXT NULL,
+  hidden INTEGER DEFAULT 0
+);
 
-### D1 配置 | D1 Setup
+CREATE TABLE comments (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  area_key TEXT NOT NULL,
+  content TEXT NOT NULL,
+  parent_id INTEGER DEFAULT 0,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  hidden INTEGER DEFAULT 0,
+  likes INTEGER DEFAULT 0,
+  pinned INTEGER DEFAULT 0
+);
 
-1. **创建 D1 数据库**: 在侧边栏选择 “Storage and Databases”，再选择 “D1 SQL 数据库”，点击 **Create**。  
-   **Create D1 Database**: In the sidebar, go to **Storage and Databases**, then **D1 SQL Databases**, and click **Create**.
+CREATE TABLE reports (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  comment_id INTEGER NOT NULL,
+  reason TEXT NOT NULL,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  resolved INTEGER DEFAULT 0
+);
 
-2. **控制台执行 SQL**: 点击数据库的 **Console**，粘贴以下建表语句并执行：  
-   **Run SQL in Console**: Click **Console** for your database, then paste and run the following statements:
+绑定数据库:
+Bind Database:
 
-   ```sql
-   CREATE TABLE comment_areas (
-     id INTEGER PRIMARY KEY AUTOINCREMENT,
-     name TEXT NOT NULL,
-     area_key TEXT NOT NULL UNIQUE,
-     intro TEXT NULL,
-     hidden INTEGER DEFAULT 0
-   );
+回到你的 Worker -> Settings -> Bindings。
 
-   CREATE TABLE comments (
-     id INTEGER PRIMARY KEY AUTOINCREMENT,
-     area_key TEXT NOT NULL,
-     content TEXT NOT NULL,
-     parent_id INTEGER DEFAULT 0,
-     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-     hidden INTEGER DEFAULT 0,
-     likes INTEGER DEFAULT 0,
-     pinned INTEGER DEFAULT 0
-   );
+点击 Add Binding -> D1 Database。
 
-   CREATE TABLE reports (
-     id INTEGER PRIMARY KEY AUTOINCREMENT,
-     comment_id INTEGER NOT NULL,
-     reason TEXT NOT NULL,
-     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-     resolved INTEGER DEFAULT 0
-   );
-   ```
+Variable name (变量名) 填写: DB
 
-3. **绑定数据库**: 回到 “Workers and Pages” 列表，点击你创建的程序 → **Settings** → 下滑到 “Bindings” (或“Database Bindings”)。  
-   **Bind Database**: Return to the “Workers and Pages” list, click your Worker → **Settings** → scroll to **Bindings**.
+Database 选择你刚才创建的数据库。
 
-4. **添加 D1 绑定**: 点击 “Add Binding”，选择刚才创建的 D1 数据库，变量名称填写为 `DB`（或你在代码中使用的名称）。  
-   **Add D1 Binding**: Click **Add Binding**, select the D1 database you created, use `DB` (or another name used in your code) as the variable name.
+点击 Deploy。
 
-5. **完成并部署**: 点击 **Deploy**。  
-   **Complete and Deploy**: Click **Deploy**.
+使用指南 | Usage Guide
+管理员访问 | Admin Access
 
----
+浏览器访问 https://your-worker.workers.dev。
 
-## 使用指南 | Usage Guide
+输入在环境变量 ADMIN_PASS 中设置的密码。
 
-### 管理员访问 | Admin Access
+登录有效期为 1 小时。
 
-1. **访问 Workers 域名**: 在浏览器中打开 `https://your-worker.workers.dev`。  
-   **Visit Worker Domain**: In your browser, open `https://your-worker.workers.dev`.
+创建讨论区 | Creating a Discussion Area
 
-2. **输入密码**: 使用你在 `ADMIN_PASS` 中设置的密码登录。  
-   **Enter Password**: Use the password you set for `ADMIN_PASS` to log in.
+登录管理员后台。
 
-3. **登录状态有效期**: 登录状态将保持 1 小时。  
-   **Login Validity**: The login state is maintained for 1 hour.
+填写讨论区名称和 唯一标识 (Area Key)。
 
----
+点击创建。area_key 将用于嵌入代码中。
 
-### 创建讨论区 | Creating a Discussion Area
+嵌入式使用 | Embedding the Comment System
 
-1. **管理员登录**: 首先通过上一步的方式登录管理员后台。  
-   **Admin Login**: First, log in to the admin panel as described above.
+在网页中插入 iframe。
+Insert an iframe into your webpage.
 
-2. **填写信息**: 在管理面板中，填写讨论区的名称、唯一标识 (`area_key`) 和简介（可选）。  
-   **Fill in Details**: In the admin panel, enter the discussion area name, unique `area_key`, and an optional description.
+URL 格式 / URL Format:
 
-3. **创建**: 点击“创建”完成讨论区创建。  
-   **Create**: Click “Create” to finalize creating the discussion area.
+code
+Code
+download
+content_copy
+expand_less
+https://your-worker.workers.dev/embed/area/[area_key]?theme=[light|dark]&lang=[zh-CN|en]
 
-> **注意**: `area_key` 创建后无法更改，且会用于 URL 中区分不同讨论区，请谨慎设置。  
-> **Note**: Once created, the `area_key` cannot be changed. It’s used in the URL to distinguish different discussion areas, so choose carefully.
+示例 / Example:
 
----
+code
+Html
+download
+content_copy
+expand_less
+<iframe 
+  src="https://my-blog-comments.workers.dev/embed/area/post-101?theme=light&lang=zh-CN"
+  style="width: 100%; height: 600px; border: none;">
+</iframe>
+高级嵌入 (Raw 模式) | Advanced Embed (Raw Mode)
 
-### 嵌入式使用 | Embedding the Comment System
+如果你希望完全使用自己的 CSS 样式，可以使用 Raw 模式。
+If you want to use your own CSS entirely, use Raw mode.
 
-1. **使用 iframe**: 在你想要嵌入评论功能的网页中，插入 `iframe`。  
-   **Use iframe**: In the webpage where you want to embed the comment system, add an `iframe`.
+URL:
+在链接末尾加上 &raw=1。
+Add &raw=1 to the end of the URL.
 
-2. **URL 格式**:  
-   **URL format**:  
-   ```
-   https://your-worker.workers.dev/embed/area/[area_key]?theme=[light|dark]&lang=[zh-CN|en]
-   ```
-   - `your-worker.workers.dev` 替换为你的 Workers 域名  
-     (Replace with your Worker’s domain)  
-   - `[area_key]` 替换为你创建的讨论区 `area_key`  
-     (Replace with your discussion area’s `area_key`)  
-   - `theme` 和 `lang` 参数按需配置（默认可不加）  
-     (Adjust `theme` and `lang` parameters as needed)
+code
+Code
+download
+content_copy
+expand_less
+https://your-worker.workers.dev/embed/area/my-key?raw=1
 
-3. **示例**:  
-   **Example**:  
-   ```
-   https://your-worker.workers.dev/embed/area/test-area?theme=dark&lang=zh-CN
-   ```
+效果:
+后端的 CSS、GitHub Markdown 样式将不会加载。只保留 HTML 结构和必要的 JS 交互逻辑（如 PoW 验证、提交、点赞）。
 
----
+评论与互动 | Commenting & Interaction
 
-### 评论 | Commenting
+发布评论: 支持 Markdown。点击发布时，系统会自动进行 PoW 计算（无需点击验证码）。
 
-1. **输入评论**: 在讨论区页面，你可以在文本框中输入评论内容，支持 Markdown 语法。  
-   **Enter Comment**: On the discussion area page, you can input comment text, which supports Markdown syntax.
+点赞: 点击点赞图标。系统会记录 Cookie 防止恶意刷赞。
 
-2. **提交评论**: 点击“提交评论”按钮完成发布。  
-   **Submit Comment**: Click the “Submit Comment” button to post it.
+举报: 遇到违规内容可点击举报。
 
-3. **不可删除**: 评论发布后无法删除。  
-   **Immutable**: After posting, the comment cannot be deleted.
+管理 | Management
 
-![alt text](./img/3-en.png)
+在后台你可以：
 
----
+查看所有讨论区。
 
-### 回复 | Replying
+隐藏或删除特定评论。
 
-1. **点击“回复”**: 在已有评论下方，点击“回复”按钮。  
-   **Click "Reply"**: Under an existing comment, click the “Reply” button.
+查看并处理举报信息。
 
-2. **输入并提交**: 在回复框中输入回复内容并点击“提交评论”。  
-   **Enter and Submit**: Type your reply in the reply box and click “Submit Comment”.
+技术细节 | Technical Details
 
----
+PoW 机制 (Proof of Work):
+前端使用 Web Crypto API 计算 SHA-256 哈希值，后端验证哈希难度。此过程不依赖 Cookie，因此不受 iOS/Safari 跨域限制影响。
 
-### 点赞 | Liking
+安全性 (Security):
 
-1. **点赞**: 在评论右侧或评论下方，点击点赞按钮即可为该评论点赞。  
-   **Like**: On the right side (or below) the comment, click the Like button to like it.
+DOMPurify: 在渲染 HTML 前清洗数据，防止 XSS。
 
----
+HttpOnly Cookie: 用于管理员鉴权。
 
-### 举报 | Reporting
+数据库 (Database): Cloudflare D1 (SQLite)。
 
-1. **点击“举报”**: 在评论旁找到“举报”按钮并点击。  
-   **Click "Report"**: Locate the “Report” button next to a comment and click it.
+技术栈 (Stack): Cloudflare Workers (ES Modules), Raw HTML/JS (无前端框架依赖，极速加载)。
 
-2. **填写举报理由**: 输入举报原因并确认提交。  
-   **Fill in Reason**: Enter the reason for reporting and confirm to submit.
+贡献指南 | Contributing
 
----
+Fork 本仓库。
 
-### 管理 | Management
+创建特性分支 (git checkout -b feature/NewFeature)。
 
-1. **查看讨论区**: 在管理员页面，你可以查看所有讨论区。  
-   **View Discussion Areas**: In the admin panel, you can view all discussion areas.
+提交更改。
 
-2. **隐藏/删除**: 你可以隐藏或删除不需要的讨论区，处理已举报的评论，并对评论做隐藏操作。  
-   **Hide/Delete**: You can hide or delete discussion areas as needed, handle reported comments, and hide them if necessary.
+推送分支并提交 Pull Request。
 
----
+致谢 | Acknowledgments
 
-## 技术细节 | Technical Details
+Cloudflare Workers
 
-- **数据库结构 / Database Schema**  
-  ```sql
-  CREATE TABLE comment_areas (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    name TEXT NOT NULL,
-    area_key TEXT NOT NULL UNIQUE,
-    intro TEXT NULL,
-    hidden INTEGER DEFAULT 0
-  );
+DOMPurify
 
-  CREATE TABLE comments (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    area_key TEXT NOT NULL,
-    content TEXT NOT NULL,
-    parent_id INTEGER DEFAULT 0,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    hidden INTEGER DEFAULT 0,
-    likes INTEGER DEFAULT 0,
-    pinned INTEGER DEFAULT 0
-  );
+Gemini & ChatGPT (Assistants)
 
-  CREATE TABLE reports (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    comment_id INTEGER NOT NULL,
-    reason TEXT NOT NULL,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    resolved INTEGER DEFAULT 0
-  );
-  ```
-
-- **密码保护 / Password Protection**: 管理员界面通过 HttpOnly Cookie + 密码验证保护。  
-  Admin panel protected by an HttpOnly cookie and password authentication.
-
-- **Cloudflare Turnstile 验证 / Turnstile Verification**: 避免垃圾消息或自动脚本。  
-  Helps prevent spam or automated submissions.
-
-- **HTML 转义 / HTML Escaping**: 评论内容进行 HTML 转义，防止 XSS 攻击。  
-  Comments are HTML-escaped to prevent XSS attacks.
-
-- **配置选项 / Configurations**:  
-  - 环境变量 / Environment variables  
-    | 变量名 (Name)           | 描述 (Description)                           | 是否必须 (Required) |
-    |-------------------------|----------------------------------------------|---------------------|
-    | `ADMIN_PASS`           | 管理员登录密码                                | 是 (Yes)           |
-    | `TURNSTILE_SITEKEY`    | Cloudflare Turnstile 站点密钥                | 是 (Yes)           |
-    | `TURNSTILE_SECRET_KEY` | Cloudflare Turnstile 密钥 (如需要则配置)      | 否 (No)            |
-
-- **wrangler.toml 配置示例 / Sample wrangler.toml**  
-  ```toml
-  name = "comment-system-worker"
-  main = "src/index.js"
-
-  [[d1_databases]]
-  binding = "DB"
-  database_name = "comment-system"
-  database_id = "your-database-id"
-  ```
-
-- **本地开发 / Local Development**:
-  1. 克隆代码仓库后，执行 `wrangler dev`。  
-     Clone the repo, then run `wrangler dev`.
-  2. 访问 [http://localhost:8787](http://localhost:8787) 进行本地测试。  
-     Visit [http://localhost:8787](http://localhost:8787) for local testing.
-
-- **代码结构 / File Structure**:
-  ```
-  comment-system/
-  ├── src/
-  │   └── index.js      # 主要入口文件 / Main entry file
-  ├── wrangler.toml     # Cloudflare 配置 / Cloudflare config
-  └── migrations/
-      └── init.sql      # 数据库初始化 SQL / D1 database init script
-  ```
-
----
-
-## 贡献指南 | Contributing
-
-1. **Fork 仓库 / Fork the repo**  
-2. **创建功能分支 / Create your feature branch**  
-   ```
-   git checkout -b feature/AmazingFeature
-   ```
-3. **提交更改 / Commit your changes**  
-   ```
-   git commit -m 'Add some AmazingFeature'
-   ```
-4. **推送分支 / Push the branch**  
-   ```
-   git push origin feature/AmazingFeature
-   ```
-5. **创建 Pull Request / Open a Pull Request**
-
----
-
-## 致谢 | Acknowledgments
-
-- [Cloudflare Workers](https://workers.cloudflare.com/) 平台  
-- Gemini 2 flash Experimental
-- Chat-GPT-o1
-
----
-
-## 反馈 | Feedback
-
-如果您发现任何问题或者有任何改进建议，请在本项目中创建一个 **Issue**。  
-If you find any issues or have improvement suggestions, please open an **Issue** in this repository.
+如果您发现问题，请提交 Issue。
+If you encounter any issues, please open an Issue.
